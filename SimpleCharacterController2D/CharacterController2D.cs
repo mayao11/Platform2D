@@ -13,6 +13,9 @@ public class CharacterController2D : MonoBehaviour
     private bool m_FacingRight = true;  // 玩家是否面朝右边
     private Vector3 m_Velocity = Vector3.zero;
 
+    const float m_NextGroundCheckLag = 0.1f;    // 起跳后的一小段时间，不能再次起跳。防止连跳的一种解决方案
+    float m_NextGroundCheckTime;            // 过了这个时间才可能落地、才能再次起跳
+
     // 这个角色控制器，是依靠刚体驱动的
     private Rigidbody2D m_Rigidbody2D;
 
@@ -38,14 +41,17 @@ public class CharacterController2D : MonoBehaviour
         m_Grounded = false;
 
         // 检测与地面的碰撞
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(m_GroundCheck.position, k_GroundedRadius, groundMask);
-        for (int i = 0; i < colliders.Length; i++)
+        if (Time.time > m_NextGroundCheckTime)
         {
-            if (colliders[i].gameObject != gameObject)
+            Collider2D[] colliders = Physics2D.OverlapCircleAll(m_GroundCheck.position, k_GroundedRadius, groundMask);
+            for (int i = 0; i < colliders.Length; i++)
             {
-                m_Grounded = true;
-                if (!wasGrounded)
-                    OnLandEvent.Invoke();
+                if (colliders[i].gameObject != gameObject)
+                {
+                    m_Grounded = true;
+                    if (!wasGrounded)
+                        OnLandEvent.Invoke();
+                }
             }
         }
     }
@@ -69,13 +75,14 @@ public class CharacterController2D : MonoBehaviour
                 Flip();
             }
         }
-        
+
         // 在地面时按下跳跃键，就会跳跃
         if (m_Grounded && jump)
         {
             m_Grounded = false;
             // 施加弹跳力
             m_Rigidbody2D.AddForce(new Vector2(0f, jumpForce));
+            m_NextGroundCheckTime = Time.time + m_NextGroundCheckLag;
         }
     }
 
@@ -86,6 +93,6 @@ public class CharacterController2D : MonoBehaviour
         m_FacingRight = !m_FacingRight;
 
         // 缩放的x轴乘以-1，图片就水平翻转了
-        Vector3.Scale(transform.localScale, new Vector3(-1, 1, 1));
+        transform.localScale = Vector3.Scale(transform.localScale, new Vector3(-1, 1, 1));
     }
 }
