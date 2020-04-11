@@ -23,6 +23,7 @@ public class CharacterController2D : MonoBehaviour
     [Space]
 
     public UnityEvent OnLandEvent;
+    public UnityEvent OnAirEvent;
 
     [System.Serializable]
     public class BoolEvent : UnityEvent<bool> { }
@@ -33,6 +34,8 @@ public class CharacterController2D : MonoBehaviour
 
         if (OnLandEvent == null)
             OnLandEvent = new UnityEvent();
+        if (OnAirEvent == null)
+            OnAirEvent = new UnityEvent();
     }
 
     private void FixedUpdate()
@@ -53,6 +56,11 @@ public class CharacterController2D : MonoBehaviour
                         OnLandEvent.Invoke();
                 }
             }
+        }
+
+        if (wasGrounded && !m_Grounded)
+        {
+            OnAirEvent.Invoke();
         }
     }
 
@@ -79,6 +87,7 @@ public class CharacterController2D : MonoBehaviour
         // 在地面时按下跳跃键，就会跳跃
         if (m_Grounded && jump)
         {
+            OnAirEvent.Invoke();
             m_Grounded = false;
             // 施加弹跳力
             m_Rigidbody2D.AddForce(new Vector2(0f, jumpForce));
